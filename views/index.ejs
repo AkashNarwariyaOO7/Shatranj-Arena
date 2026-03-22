@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      .chessboard {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        grid-template-rows: repeat(8, minmax(0, 1fr));
+        width: min(90vw, 650px);
+        height: min(90vw, 650px);
+        transform: rotate(0deg);
+      }
+
+      .piece.white {
+        color: white;
+
+        filter: drop-shadow(0 0 2px rgba(0, 0, 0, 1));
+      }
+
+      <!-- .flipped {
+        transform: rotate(180deg);
+      } -->
+
+      .square {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .square.light {
+        background-color: #f0d9b5;
+      }
+
+      .square.dark {
+        background-color: #b58863;
+      }
+
+      .piece {
+        font-size: 36px;
+        cursor: pointer;
+      }
+
+      <!-- .piece.draggable {
+        cursor: grab;
+      } -->
+
+      <!-- .dragging {
+        opacity: 0.5;
+      } -->
+
+      .flipped .piece {
+        transform: rotate(180deg);
+      }
+
+      .square.highlight::after {
+        content: "";
+        width: 20%;
+        height: 20%;
+        background: rgba(104, 165, 104, 0.6);
+        border-radius: 50%;
+        position: absolute;
+      }
+
+      .highlight-capture {
+        background-color: rgba(191, 74, 74, 0.6) !important;
+      }
+      .last-move {
+        box-shadow: inset 0 0 0 5px rgba(96, 132, 89, 0.7);
+      }
+      #moveList {
+        color: white;
+        max-height: 600px;
+        overflow-y: auto;
+        font-size: 18px;
+      }
+
+      .clock {
+        width: 160px;
+        padding: 18px;
+        border-radius: 12px;
+        text-align: center;
+        font-family: monospace;
+        font-size: 28px;
+        font-weight: bold;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        transition: 0.3s;
+      }
+
+      .clock span {
+        font-size: 12px;
+        letter-spacing: 2px;
+        opacity: 0.7;
+      }
+
+      .white-clock {
+        background: #f4f4f4;
+        color: #111;
+      }
+
+      .black-clock {
+        background: #1e1e1e;
+        color: white;
+      }
+
+      .clock:hover {
+        transform: scale(1.05);
+      }
+
+      <!-- .move-panel {
+        width: 200px;
+        height: 500px;
+        background: #1e1e1e;
+        border-radius: 12px;
+        padding: 15px;
+        color: white;
+        overflow-y: auto;
+      }
+
+      .move-panel h2 {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .move-panel ul {
+        list-style: none;
+        padding: 0;
+        font-family: monospace;
+        font-size: 18px;
+      } -->
+
+      .move-panel li {
+        padding: 4px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      body {
+        background: #0f172a;
+        font-family: system-ui;
+        margin: 0;
+      }
+
+      /* MAIN LAYOUT */
+
+      .game-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+        height: 100vh;
+        flex-wrap: wrap; 
+      }
+
+      /* BOARD CONTAINER */
+
+      .board-container {
+        background: #111827;
+        padding: 10px;
+        border-radius: 12px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+      }
+
+      /* LEFT PANEL */
+
+      .left-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      /* CLOCK */
+
+      .clock {
+        width: 170px;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        font-family: monospace;
+        font-size: 32px;
+        font-weight: bold;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+      }
+
+      .clock span {
+        font-size: 12px;
+        letter-spacing: 2px;
+        opacity: 0.7;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      <!-- .white-clock {
+        background: #f4f4f5;
+        color: #111;
+      }
+
+      .black-clock {
+        background: #18181b;
+        color: white;
+      } -->
+
+      /* BUTTONS */
+
+      .control-box {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .control-box button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+        transition: 0.2s;
+      }
+
+      .control-box button:hover {
+        background: #1d4ed8;
+      }
+
+      /* MOVE LIST */
+
+      .move-panel {
+        width: 220px;
+        max-width: 220px;
+        background: #111827;
+        border-radius: 12px;
+        padding: 18px;
+        color: white;
+        height: 620px;
+        overflow-y: auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      }
+
+      .move-panel h2 {
+        text-align: center;
+        margin-bottom: 12px;
+        font-size: 18px;
+      }
+
+      .move-panel ul {
+        list-style: none;
+        padding: 0;
+        font-family: monospace;
+        font-size: 18px;
+      }
+
+      .move-panel li {
+        padding: 6px 4px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      #restartBtn {
+        padding: 14px 32px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        background: #2563eb;
+        color: white;
+        cursor: pointer;
+        transition: 0.25s;
+      }
+
+      #restartBtn:hover {
+        background: #1d4ed8;
+        transform: scale(1.05);
+      }
+
+      /* KING GLOW AFTER CHECKMATE */
+
+      .king-glow {
+        box-shadow:
+          0 0 25px 10px gold inset,
+          0 0 30px gold;
+        animation: kingGlow 1.2s infinite alternate;
+        border-radius: 6px;
+      }
+
+      @keyframes kingGlow {
+        0% {
+          box-shadow: 0 0 10px gold;
+        }
+        100% {
+          box-shadow: 0 0 35px gold;
+        }
+      }
+
+      .check-glow {
+  box-shadow: 0 0 20px 6px red inset, 0 0 15px red;
+  border-radius: 6px;
+}
+
+      /* CROWN ICON */
+
+      .crown {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        font-size: 26px;
+        z-index: 5;
+        animation: crownDrop 0.6s ease;
+        pointer-events: none;
+      }
+
+      @keyframes crownDrop {
+        0% {
+          transform: translateY(-40px) scale(0.5);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+
+      .piece-img {
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        user-select: none;
+      }
+
+    .player-box {
+  width: 650px;
+  text-align: center;
+  padding: 10px;
+  font-weight: bold;
+  border-radius: 8px;
+  margin: 6px 0;
+}
+
+.white-player {
+  background: #f4f4f5;
+  color: black;
+}
+
+.black-player {
+  background: #18181b;
+  color: white;
+}
+
+<!-- .join-box {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.join-box input {
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+}
+
+.join-box button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: white;
+} -->
+      
+    </style>
+
+    <title>Chess Game</title>
+  </head>
+
+  <body>
+    <div
+      id="gameOverScreen"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        z-index: 999;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 25px;
+      "
+    >
+      <div style="font-size: 60px">👑</div>
+
+      <div id="winnerText"></div>
+
+      <button
+        id="restartBtn"
+        style="
+          margin-top: 30px;
+          padding: 12px 28px;
+          font-size: 18px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          background: #2563eb;
+          color: white;
+          display: block;
+          text-align: center;
+        "
+      >
+        Play Again
+      </button>
+    </div>
+
+    <div class="game-container">
+      <!-- LEFT PANEL -->
+      <div class="left-panel">
+        <div class="clock white-clock">
+          <span>WHITE</span>
+          <div id="whiteTimer">10:00</div>
+        </div>
+
+        <div class="control-box">
+          <button id="startBtn">Start</button>
+          <button id="pauseBtn">Pause</button>
+        </div>
+
+        <div class="clock black-clock">
+          <span>BLACK</span>
+          <div id="blackTimer">10:00</div>
+        </div>
+      </div>
+
+      <!-- BOARD -->
+       
+      <div class="board-container" style="display:flex; flex-direction:column; align-items:center;">
+
+  <!-- BLACK PLAYER -->
+  <div class="player-box black-player" id="blackPlayer">
+    Waiting...
+  </div>
+
+  <!-- BOARD -->
+  <div class="chessboard"></div>
+
+  <!-- WHITE PLAYER -->
+  <div class="player-box white-player" id="whitePlayer">
+    Waiting...
+  </div>
+
+</div>
+
+      <!-- MOVE LIST -->
+      <div class="move-panel">
+        <h2>Game Moves</h2>
+        <ul id="moveList"></ul>
+      </div>
+    </div>
+    <script
+      src="https://cdn.socket.io/4.8.1/socket.io.min.js"
+      integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+"
+      crossorigin="anonymous"
+    ></script>
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"
+      integrity="sha512-xRllwz2gdZciIB+AkEbeq+gVhX8VB8XsfqeFbUh+SzHlN96dEduwtTuVuc2u9EROlmW9+yhRlxjif66ORpsgVA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <script src="/js/chessgame.js"></script>
+
+    <!-- <audio id="moveAudio" src="/sounds/move.mp3" preload="auto"></audio> -->
+
+   
+  </body>
+</html>
