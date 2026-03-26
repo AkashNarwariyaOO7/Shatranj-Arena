@@ -7,7 +7,12 @@ const path = require("path");
 const app = express();
 
 const server = http.createServer(app);
-const io = socket(server);
+const io = socket(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 const chess = new Chess();
 let players = {};
@@ -76,6 +81,7 @@ io.on("connection", function (uniquesocket) {
     } else if (uniquesocket.id === players.black) {
       delete players.black;
     }
+     delete playerData[uniquesocket.id];
   });
 
  uniquesocket.on("move", (move) => {
@@ -134,7 +140,7 @@ io.on("connection", function (uniquesocket) {
 uniquesocket.on("restartGame", () => {
 
   chess.reset();
-  currentPlayer = "w";   
+   let currentPlayer = "w";   
   //  lastMove = null;
      
   io.emit("boardState", chess.fen());
@@ -147,8 +153,11 @@ uniquesocket.on("restartGame", () => {
 });
 
 
-server.listen(3000, function () {
-  console.log("listening on port 3000");
+
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, function () {
+  console.log("Server running on port", PORT);
 });
 
 
