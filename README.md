@@ -1,6 +1,6 @@
 # ♟️ Chess Game (Shatranj Arena)
 
-🚀 Live Demo: https://shatranj-arena-1.onrender.com
+🚀 Live Demo: https://shatranj-arena.onrender.com
 
 ## Features
 - Real-time multiplayer
