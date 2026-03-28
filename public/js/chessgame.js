@@ -134,7 +134,7 @@ const renderBoard = () => {
         const pieceImage = document.createElement("img");
 
         const color = square.color === "w" ? "w" : "b";
-        const type = square.type.toUpperCase();
+        const type = square.type;
 
         pieceImage.src = `/images/pieces/${color}${type}.svg`;
         pieceImage.classList.add("piece-img");
